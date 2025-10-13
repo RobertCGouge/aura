@@ -1,4 +1,4 @@
-// Copyright Robert Gouge 2025
+// Copyright Druid Mechanics
 
 
 #include "AbilitySystem/AbilityTasks/TargetDataUnderMouse.h"
@@ -19,7 +19,6 @@ void UTargetDataUnderMouse::Activate()
 	}
 	else
 	{
-		//TODO: We are on the the server so listen for target data.
 		const FGameplayAbilitySpecHandle SpecHandle = GetAbilitySpecHandle();
 		const FPredictionKey ActivationPredictionKey = GetActivationPredictionKey();
 		AbilitySystemComponent.Get()->AbilityTargetDataSetDelegate(SpecHandle, ActivationPredictionKey).AddUObject(this, &UTargetDataUnderMouse::OnTargetDataReplicatedCallback);
@@ -29,21 +28,19 @@ void UTargetDataUnderMouse::Activate()
 			SetWaitingOnRemotePlayerData();
 		}
 	}
-
-	
-	
 }
 
 void UTargetDataUnderMouse::SendMouseCursorData()
 {
 	FScopedPredictionWindow ScopedPrediction(AbilitySystemComponent.Get());
-	const APlayerController* PC = Ability->GetCurrentActorInfo()->PlayerController.Get();
+	
+	APlayerController* PC = Ability->GetCurrentActorInfo()->PlayerController.Get();
 	FHitResult CursorHit;
 	PC->GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 
 	FGameplayAbilityTargetDataHandle DataHandle;
 	FGameplayAbilityTargetData_SingleTargetHit* Data = new FGameplayAbilityTargetData_SingleTargetHit();
-	Data->HitResult =  CursorHit;
+	Data->HitResult = CursorHit;
 	DataHandle.Add(Data);
 	
 	AbilitySystemComponent->ServerSetReplicatedTargetData(
@@ -59,8 +56,7 @@ void UTargetDataUnderMouse::SendMouseCursorData()
 	}
 }
 
-void UTargetDataUnderMouse::OnTargetDataReplicatedCallback(const FGameplayAbilityTargetDataHandle& DataHandle,
-	FGameplayTag ActivationTag)
+void UTargetDataUnderMouse::OnTargetDataReplicatedCallback(const FGameplayAbilityTargetDataHandle& DataHandle, FGameplayTag ActivationTag)
 {
 	AbilitySystemComponent->ConsumeClientReplicatedTargetData(GetAbilitySpecHandle(), GetActivationPredictionKey());
 	if (ShouldBroadcastAbilityTaskDelegates())
